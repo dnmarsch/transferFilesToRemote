@@ -7,16 +7,22 @@ Created on Wed Dec 27 15:23:37 2023
 
 import subprocess
 import shutil
+import os
 
 
 USER = 'dmarsch'
 MOUNT_POINT = f'/media/{USER}/avolusion'
-STATIC_IP_ADDY = '192.168.86.30'
-TARGET = f'{USER}@{STATIC_IP_ADDY}:{MOUNT_POINT}'
+STATIC_WIFI_IP_ADDY = '192.168.86.30' #wifi static IP address
+STATIC_ETHERNET_IP_ADDY = '192.168.86.32' #ethernet static IP address
 USER_PASSWORD = 'Cookie.4597'
 
 PSCP = 'pscp.exe'
 PSCP_DIR = 'C:\\Users\\Derek Marsch\\Downloads'
+
+nicSel_dict = {
+    "1" : STATIC_WIFI_IP_ADDY,
+    "2" : STATIC_ETHERNET_IP_ADDY
+}
 
 TV_dict = {
     "1" : "Jace Shows",
@@ -66,34 +72,42 @@ TV_DIR_SEL_MSG = '''\t1 for Jace Shows\n
     \t5 for Unwatched Shows\n'''
 
 if __name__ == "__main__":
-    dirSelValid = False
     while(True):
+        while(True):
+            nicSel = input('Please select the connection type:\n\t1 for Wifi\n\t2 for Ethernet\n')
+            if(nicSel in nicSel_dict):
+                break
+            else:
+                print('Selection invalid. Please try again.')
+        if(nicSel_dict[nicSel] == STATIC_WIFI_IP_ADDY):
+            TARGET = f'{USER}@{STATIC_WIFI_IP_ADDY}:{MOUNT_POINT}'
+        elif(nicSel_dict[nicSel] == STATIC_ETHERNET_IP_ADDY):
+            TARGET = f'{USER}@{STATIC_ETHERNET_IP_ADDY}:{MOUNT_POINT}'
+        
         pathToSourceDir = input('Please enter the path to the directory to be recursively copied: ').strip('"') #remove " from dragging & dropping
 
-        while(dirSelValid == False):
+        while(True):
             targetRootDirSel = input(f'Please enter target root directory type:\n{ROOT_DIR_SEL_MSG}')
             if(targetRootDirSel not in rootDir_dict):
                 print('Selection invalid. Please try again.')
             else:
-                dirSelValid = True
+                break
                                   
         if(type(rootDir_dict[targetRootDirSel]) is dict): #Movies or TV selected
             if(rootDir_dict[targetRootDirSel] == Movies_dict):
-                movieDirSelValid = False
-                while(movieDirSelValid == False):
+                while(True):
                     targetDirSel = input(f'Please enter the movie category:\n{MOVIE_DIR_SEL_MSG}')
                     if(targetDirSel in Movies_dict):
-                        movieDirSelValid = True
+                        break
                     else:
                         print('Selection invalid. Please try again.')
                         
                 pathToTargetDir = 'Movies/' + Movies_dict[targetDirSel]
             elif(rootDir_dict[targetRootDirSel] == TV_dict):
-                tvDirSelValid = False
-                while(tvDirSelValid == False):
+                while(True):
                     targetDirSel = input(f'Please enter the desired directory:\n{TV_DIR_SEL_MSG}')
                     if(targetDirSel in TV_dict):
-                        tvDirSelValid = True
+                        break
                     else:
                         print('Selection invalid. Please try again.')
                 pathToTargetDir = 'TV/' + TV_dict[targetDirSel]
@@ -101,7 +115,8 @@ if __name__ == "__main__":
             pathToTargetDir = rootDir_dict[targetRootDirSel]
         
         targetDir = input('Please enter the path to the target directory (Ex: Survivor, Survivor/Season 45, etc.): ')
-        pathToTargetDir = pathToTargetDir + '/' + targetDir
+        if(targetDir != '\n'):
+            pathToTargetDir = pathToTargetDir + '/' + targetDir
         
         # print(f'TARGET: {TARGET}')
         # print(f'pscp dir: {PSCP_DIR}')
@@ -110,13 +125,16 @@ if __name__ == "__main__":
         # print(f'path to target: {TARGET}/{pathToTargetDir}')
         
         try:
-            # print([PSCP, "-v", "-pw", USER_PASSWORD, "-r", pathToSourceDir, f'{TARGET}/{pathToTargetDir}'])
-            result = subprocess.run([PSCP, "-v", "-pw", USER_PASSWORD, "-r", pathToSourceDir, f'{TARGET}/{pathToTargetDir}'], cwd = PSCP_DIR, capture_output = True) #broken
+            # print([PSCP, "-pw", USER_PASSWORD, "-r", pathToSourceDir, f'{TARGET}/{pathToTargetDir}'])
+            result = subprocess.run([PSCP, "-pw", USER_PASSWORD, "-r", pathToSourceDir, f'{TARGET}/{pathToTargetDir}'], cwd = PSCP_DIR, capture_output = True) #broken
 
             # print(f'args: {result.args}')
             result.check_returncode() #raise error if return code not 0
             print('Upload successful')
-            shutil.rmtree(pathToSourceDir, ignore_errors=True) # Use shutil.rmtree for cross-platform directory removal (ignore FileNotFoundError)
+            if(os.path.isdir(pathToSourceDir)):
+                shutil.rmtree(pathToSourceDir, ignore_errors=True) # Use shutil.rmtree for cross-platform directory removal (ignore FileNotFoundError)
+            elif(os.path.isfile(pathToSourceDir)):
+                os.remove(pathToSourceDir)
         except subprocess.CalledProcessError as e:
             print ( "Error:\nreturn code: ", e.returncode, "\nOutput: ", e.stderr.decode("utf-8") )
             raise
