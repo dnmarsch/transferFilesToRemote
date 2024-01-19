@@ -15,9 +15,7 @@ MOUNT_POINT = f'/media/{USER}/avolusion'
 STATIC_WIFI_IP_ADDY = '192.168.86.30' #wifi static IP address
 STATIC_ETHERNET_IP_ADDY = '192.168.86.32' #ethernet static IP address
 USER_PASSWORD = 'Cookie.4597'
-
-PSCP = 'pscp.exe'
-PSCP_DIR = 'C:\\Users\\Derek Marsch\\Downloads'
+PSCP_PATH = r'C:\Users\Derek Marsch\Downloads\pscp.exe'
 
 nicSel_dict = {
     "1" : STATIC_WIFI_IP_ADDY,
@@ -125,8 +123,8 @@ if __name__ == "__main__":
         # print(f'path to target: {TARGET}/{pathToTargetDir}')
         
         try:
-            # print([PSCP, "-pw", USER_PASSWORD, "-r", pathToSourceDir, f'{TARGET}/{pathToTargetDir}'])
-            result = subprocess.run([PSCP, "-pw", USER_PASSWORD, "-r", pathToSourceDir, f'{TARGET}/{pathToTargetDir}'], cwd = PSCP_DIR, capture_output = True) #broken
+            print([PSCP_PATH, "-pw", USER_PASSWORD, "-v", "-r", pathToSourceDir, f'{TARGET}/{pathToTargetDir}'])
+            result = subprocess.run([PSCP_PATH, "-pw", USER_PASSWORD, "-v", "-r", pathToSourceDir, f'{TARGET}/{pathToTargetDir}'], capture_output=True)
 
             # print(f'args: {result.args}')
             result.check_returncode() #raise error if return code not 0
